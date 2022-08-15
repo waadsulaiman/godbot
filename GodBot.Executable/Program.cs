@@ -11,9 +11,10 @@ using IHost host = Host.CreateDefaultBuilder(args)
     {
         config.SocketConfig = new DiscordSocketConfig
         {
-            LogLevel = LogSeverity.Verbose,
+            LogLevel = LogSeverity.Info,
             AlwaysDownloadUsers = true,
-            MessageCacheSize = 200
+            MessageCacheSize = 200,
+            GatewayIntents = GatewayIntents.All,
         };
 
         config.Token = AppSettings.DiscordToken;
@@ -32,6 +33,7 @@ using IHost host = Host.CreateDefaultBuilder(args)
     {
         services.RegisterServicesFromAssemblies();
     })
+    .UseConsoleLifetime()
     .Build();
 
 await host.RunAsync();

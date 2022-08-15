@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GodBot.Core.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using GodBot.Core.Interfaces;
 
 namespace GodBot.Core.Extensions
 {

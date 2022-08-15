@@ -32,12 +32,10 @@ namespace GodBot.Executable
 
         private async Task OnCommandExecuted(Optional<CommandInfo> commandInfo, ICommandContext commandContext, IResult result)
         {
-            if (result.IsSuccess)
+            if (commandInfo.IsSpecified && !result.IsSuccess)
             {
-                return;
+                await commandContext.Channel.SendMessageAsync(result.ErrorReason);
             }
-
-            await commandContext.Channel.SendMessageAsync(result.ErrorReason);
         }
 
         private async Task OnMessageReceived(SocketMessage socketMessage)

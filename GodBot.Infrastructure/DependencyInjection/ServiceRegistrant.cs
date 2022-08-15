@@ -1,5 +1,4 @@
 ﻿using GodBot.Core.Interfaces;
-using GodBot.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GodBot.Infrastructure.DependencyInjection
@@ -11,7 +10,6 @@ namespace GodBot.Infrastructure.DependencyInjection
     {
         public void Register(IServiceCollection services)
         {
-            services.AddSingleton<IWeatherService, WeatherService>();
         }
     }
 }
