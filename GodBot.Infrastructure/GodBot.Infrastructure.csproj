@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GodBot.Core\GodBot.Core.csproj" />
+  </ItemGroup>
+
 </Project>

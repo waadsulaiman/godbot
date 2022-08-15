@@ -1,6 +1,6 @@
 ﻿namespace GodBot.Core
 {
-    public class Class1
+    public interface ICore
     {
 
     }

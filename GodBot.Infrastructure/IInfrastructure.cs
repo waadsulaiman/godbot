@@ -1,7 +1,6 @@
 ﻿namespace GodBot.Infrastructure
 {
-    public class Class1
+    public interface IInfrastructure
     {
-
     }
 }
