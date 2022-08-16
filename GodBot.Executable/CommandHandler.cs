@@ -4,6 +4,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using Victoria;
 
 namespace GodBot.Executable
 {
@@ -12,22 +13,31 @@ namespace GodBot.Executable
     /// </summary>
     public class CommandHandler : DiscordClientService
     {
-        private readonly DiscordSocketClient _client;
         private readonly CommandService _service;
+        private readonly LavaNode _lavaNode;
         private readonly IServiceProvider _provider;
 
-        public CommandHandler(DiscordSocketClient client, CommandService service, IServiceProvider provider, ILogger<DiscordClientService> logger) : base(client, logger)
+        public CommandHandler(DiscordSocketClient client, CommandService service, LavaNode lavaNode, IServiceProvider provider, ILogger<DiscordClientService> logger) : base(client, logger)
         {
-            _client = client;
             _service = service;
+            _lavaNode = lavaNode;
             _provider = provider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _client.MessageReceived += OnMessageReceived;
+            Client.Ready += OnReadyAsync;
+            Client.MessageReceived += OnMessageReceived;
             _service.CommandExecuted += OnCommandExecuted;
             await _service.AddModulesAsync(Assembly.GetEntryAssembly(), _provider);
+        }
+
+        private async Task OnReadyAsync()
+        {
+            if (!_lavaNode.IsConnected)
+            {
+                await _lavaNode.ConnectAsync();
+            }
         }
 
         private async Task OnCommandExecuted(Optional<CommandInfo> commandInfo, ICommandContext commandContext, IResult result)
@@ -51,12 +61,12 @@ namespace GodBot.Executable
             }
 
             var argPos = 0;
-            if (!message.HasStringPrefix(AppSettings.CommandPrefix, ref argPos) && !message.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            if (!message.HasStringPrefix(AppSettings.CommandPrefix, ref argPos) && !message.HasMentionPrefix(Client.CurrentUser, ref argPos))
             {
                 return;
             }
 
-            var context = new SocketCommandContext(_client, message);
+            var context = new SocketCommandContext(Client, message);
             await _service.ExecuteAsync(context, argPos, _provider);
         }
     }

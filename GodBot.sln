@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GodBot.Core", "GodBot.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GodBot.Infrastructure", "GodBot.Infrastructure\GodBot.Infrastructure.csproj", "{BADC87C7-C265-4437-8C57-60E62F2056A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GodBot.Executable", "GodBot.Executable\GodBot.Executable.csproj", "{A39E69F4-DF38-41B4-B504-4AE07916056B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GodBot.Executable", "GodBot.Executable\GodBot.Executable.csproj", "{A39E69F4-DF38-41B4-B504-4AE07916056B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

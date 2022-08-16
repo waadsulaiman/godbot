@@ -13,7 +13,7 @@ using IHost host = Host.CreateDefaultBuilder(args)
         {
             LogLevel = LogSeverity.Info,
             AlwaysDownloadUsers = true,
-            MessageCacheSize = 200,
+            MessageCacheSize = 500,
             GatewayIntents = GatewayIntents.All,
         };
 
