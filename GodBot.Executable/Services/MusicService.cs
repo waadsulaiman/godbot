@@ -1,16 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
-using Victoria;
 
 namespace GodBot.Executable.Services
 {
-    public sealed class MusicService
+    public class MusicService
     {
         private readonly LavaNode _lavaNode;
         private readonly ILogger<LavaNode> _logger;
-        public readonly HashSet<ulong> VoteQueue;
         private readonly ConcurrentDictionary<ulong, CancellationTokenSource> _disconnectTokens;
 
         public MusicService(LavaNode lavaNode, ILogger<LavaNode> logger)
@@ -32,9 +31,9 @@ namespace GodBot.Executable.Services
             _lavaNode.OnTrackException += OnTrackException;
             _lavaNode.OnTrackStuck += OnTrackStuck;
             _lavaNode.OnWebSocketClosed += OnWebSocketClosed;
-
-            VoteQueue = new HashSet<ulong>();
         }
+
+        #region OnPlayerUpdated
 
         private Task OnPlayerUpdated(PlayerUpdateEventArgs arg)
         {
@@ -42,11 +41,19 @@ namespace GodBot.Executable.Services
             return Task.CompletedTask;
         }
 
+        #endregion OnPlayerUpdated
+
+        #region OnStatsReceived
+
         private Task OnStatsReceived(StatsEventArgs arg)
         {
             _logger.LogInformation($"Lavalink has been up for {arg.Uptime}.");
             return Task.CompletedTask;
         }
+
+        #endregion OnStatsReceived
+
+        #region OnTrackStarted
 
         private async Task OnTrackStarted(TrackStartEventArgs arg)
         {
@@ -64,6 +71,10 @@ namespace GodBot.Executable.Services
             value.Cancel(true);
             await arg.Player.TextChannel.SendMessageAsync("Auto disconnect has been cancelled!");
         }
+
+        #endregion OnTrackStarted
+
+        #region OnTrackEnded
 
         private async Task OnTrackEnded(TrackEndedEventArgs args)
         {
@@ -91,6 +102,10 @@ namespace GodBot.Executable.Services
                 $"{args.Reason}: {args.Track.Title}\nNow playing: {lavaTrack.Title}");
         }
 
+        #endregion OnTrackEnded
+
+        #region InitiateDisconnectAsync
+
         private async Task InitiateDisconnectAsync(LavaPlayer player, TimeSpan timeSpan)
         {
             if (!_disconnectTokens.TryGetValue(player.VoiceChannel.Id, out var value))
@@ -115,6 +130,10 @@ namespace GodBot.Executable.Services
             await player.TextChannel.SendMessageAsync("Invite me again sometime, sugar.");
         }
 
+        #endregion InitiateDisconnectAsync
+
+        #region OnTrackException
+
         private async Task OnTrackException(TrackExceptionEventArgs arg)
         {
             _logger.LogError($"Track {arg.Track.Title} threw an exception. Please check Lavalink console/logs.");
@@ -122,6 +141,10 @@ namespace GodBot.Executable.Services
             await arg.Player.TextChannel.SendMessageAsync(
                 $"{arg.Track.Title} has been re-added to queue after throwing an exception.");
         }
+
+        #endregion OnTrackException
+
+        #region OnTrackStuck
 
         private async Task OnTrackStuck(TrackStuckEventArgs arg)
         {
@@ -132,10 +155,16 @@ namespace GodBot.Executable.Services
                 $"{arg.Track.Title} has been re-added to queue after getting stuck.");
         }
 
+        #endregion OnTrackStuck
+
+        #region OnWebSocketClosed
+
         private Task OnWebSocketClosed(WebSocketClosedEventArgs arg)
         {
             _logger.LogCritical($"Discord WebSocket connection closed with following reason: {arg.Reason}");
             return Task.CompletedTask;
         }
+
+        #endregion OnWebSocketClosed
     }
 }

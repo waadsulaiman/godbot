@@ -6,6 +6,8 @@ namespace GodBot.Executable.Module
 {
     public class UserModule : ModuleBase<SocketCommandContext>
     {
+        #region GetUserInfoAsync
+
         [Command("userinfo")]
         [Alias("user", "user-info", "u-info")]
         [RequireBotPermission(GuildPermission.EmbedLinks)]
@@ -27,5 +29,7 @@ namespace GodBot.Executable.Module
 
             await ReplyAsync(embed: embed.Build());
         }
+
+        #endregion GetUserInfoAsync
     }
 }

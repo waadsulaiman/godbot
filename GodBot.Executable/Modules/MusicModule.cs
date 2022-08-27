@@ -1,25 +1,24 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using System.Text;
+using GodBot.Executable.Services;
+using Victoria;
 using Victoria.Enums;
 using Victoria.Responses.Search;
-using Victoria;
-using GodBot.Executable.Services;
 
 namespace GodBot.Executable.Modules
 {
     public sealed class MusicModule : ModuleBase<SocketCommandContext>
     {
         private readonly LavaNode _lavaNode;
-        private readonly MusicService _audioService;
-        private static readonly IEnumerable<int> Range = Enumerable.Empty<int>();
+        private readonly MusicService _service;
 
-        public MusicModule(LavaNode lavaNode, MusicService audioService)
+        public MusicModule(LavaNode lavaNode, MusicService service)
         {
             _lavaNode = lavaNode;
-            _audioService = audioService;
+            _service = service;
         }
+
+        #region JoinAsync
 
         [Command("Join")]
         public async Task JoinAsync()
@@ -48,6 +47,10 @@ namespace GodBot.Executable.Modules
             }
         }
 
+        #endregion JoinAsync
+
+        #region LeaveAsync
+
         [Command("Leave")]
         public async Task LeaveAsync()
         {
@@ -74,6 +77,10 @@ namespace GodBot.Executable.Modules
                 await ReplyAsync(exception.Message);
             }
         }
+
+        #endregion LeaveAsync
+
+        #region PlayAsync
 
         [Command("Play")]
         public async Task PlayAsync([Remainder] string searchQuery)
@@ -151,6 +158,10 @@ namespace GodBot.Executable.Modules
             }
         }
 
+        #endregion PlayAsync
+
+        #region PauseAsync
+
         [Command("Pause")]
         public async Task PauseAsync()
         {
@@ -176,6 +187,10 @@ namespace GodBot.Executable.Modules
                 await ReplyAsync(exception.Message);
             }
         }
+
+        #endregion PauseAsync
+
+        #region ResumeAsync
 
         [Command("Resume")]
         public async Task ResumeAsync()
@@ -203,6 +218,10 @@ namespace GodBot.Executable.Modules
             }
         }
 
+        #endregion ResumeAsync
+
+        #region StopAsync
+
         [Command("Stop")]
         public async Task StopAsync()
         {
@@ -229,6 +248,10 @@ namespace GodBot.Executable.Modules
             }
         }
 
+        #endregion StopAsync
+
+        #region SkipAsync
+
         [Command("Skip")]
         public async Task SkipAsync()
         {
@@ -244,27 +267,6 @@ namespace GodBot.Executable.Modules
                 return;
             }
 
-            var voiceChannelUsers = (player.VoiceChannel as SocketVoiceChannel)?.Users
-                .Where(x => !x.IsBot)
-                .ToArray();
-
-            if (_audioService.VoteQueue.Contains(Context.User.Id))
-            {
-                await ReplyAsync("You can't vote again.");
-                return;
-            }
-
-            _audioService.VoteQueue.Add(Context.User.Id);
-            if (voiceChannelUsers != null)
-            {
-                var percentage = _audioService.VoteQueue.Count / voiceChannelUsers.Length * 100;
-                if (percentage < 85)
-                {
-                    await ReplyAsync("You need more than 85% votes to skip this song.");
-                    return;
-                }
-            }
-
             try
             {
                 var (oldTrack, currenTrack) = await player.SkipAsync();
@@ -274,9 +276,11 @@ namespace GodBot.Executable.Modules
             {
                 await ReplyAsync(exception.Message);
             }
-
-            _audioService.VoteQueue.Clear();
         }
+
+        #endregion SkipAsync
+
+        #region SeekAsync
 
         [Command("Seek")]
         public async Task SeekAsync(TimeSpan timeSpan)
@@ -304,6 +308,10 @@ namespace GodBot.Executable.Modules
             }
         }
 
+        #endregion SeekAsync
+
+        #region VolumeAsync
+
         [Command("Volume")]
         public async Task VolumeAsync(ushort volume)
         {
@@ -323,6 +331,10 @@ namespace GodBot.Executable.Modules
                 await ReplyAsync(exception.Message);
             }
         }
+
+        #endregion VolumeAsync
+
+        #region NowPlayingAsync
 
         [Command("NowPlaying"), Alias("Np")]
         public async Task NowPlayingAsync()
@@ -351,93 +363,33 @@ namespace GodBot.Executable.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        #endregion NowPlayingAsync
+
+        #region QueueAsync
+
         [Command("Queue")]
-        public Task QueueAsync()
+        public async Task QueueAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
             {
-                return ReplyAsync("I'm not connected to a voice channel.");
+                await ReplyAsync("I'm not connected to a voice channel.");
+                return;
             }
 
-            return ReplyAsync(player.PlayerState != PlayerState.Playing
+            try
+            {
+                await ReplyAsync(player.PlayerState != PlayerState.Playing
                 ? "Woaaah there, I'm not playing any tracks."
-                : string.Join(Environment.NewLine, player.Queue.Select(x => x.Title)));
+                : player.Queue.Count > 0
+                ? string.Join(Environment.NewLine, player.Queue.Select(x => x.Title))
+                : "There seems to be no tracks left to play after this!");
+            }
+            catch (Exception exception)
+            {
+                await ReplyAsync(exception.Message);
+            }
         }
 
-        [Command("OVH", RunMode = RunMode.Async)]
-        public async Task ShowOVHLyrics()
-        {
-            if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
-            {
-                await ReplyAsync("I'm not connected to a voice channel.");
-                return;
-            }
-
-            if (player.PlayerState != PlayerState.Playing)
-            {
-                await ReplyAsync("Woaaah there, I'm not playing any tracks.");
-                return;
-            }
-
-            var lyrics = await player.Track.FetchLyricsFromOvhAsync();
-            if (string.IsNullOrWhiteSpace(lyrics))
-            {
-                await ReplyAsync($"No lyrics found for {player.Track.Title}");
-                return;
-            }
-
-            var splitLyrics = lyrics.Split('\n');
-            var stringBuilder = new StringBuilder();
-            foreach (var line in splitLyrics)
-            {
-                if (Range.Contains(stringBuilder.Length))
-                {
-                    await ReplyAsync($"```{stringBuilder}```");
-                    stringBuilder.Clear();
-                }
-
-                stringBuilder.AppendLine(line);
-            }
-
-            await ReplyAsync($"```{stringBuilder}```");
-        }
-
-        [Command("Genius", RunMode = RunMode.Async)]
-        public async Task ShowGeniusLyrics()
-        {
-            if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
-            {
-                await ReplyAsync("I'm not connected to a voice channel.");
-                return;
-            }
-
-            if (player.PlayerState != PlayerState.Playing)
-            {
-                await ReplyAsync("Woaaah there, I'm not playing any tracks.");
-                return;
-            }
-
-            var lyrics = await player.Track.FetchLyricsFromGeniusAsync();
-            if (string.IsNullOrWhiteSpace(lyrics))
-            {
-                await ReplyAsync($"No lyrics found for {player.Track.Title}");
-                return;
-            }
-
-            var splitLyrics = lyrics.Split('\n');
-            var stringBuilder = new StringBuilder();
-            foreach (var line in splitLyrics)
-            {
-                if (Range.Contains(stringBuilder.Length))
-                {
-                    await ReplyAsync($"```{stringBuilder}```");
-                    stringBuilder.Clear();
-                }
-
-                stringBuilder.AppendLine(line);
-            }
-
-            await ReplyAsync($"```{stringBuilder}```");
-        }
+        #endregion QueueAsync
     }
 }

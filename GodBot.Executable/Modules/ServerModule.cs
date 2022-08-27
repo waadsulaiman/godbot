@@ -5,6 +5,8 @@ namespace GodBot.Executable.Module
 {
     public class ServerModule : ModuleBase<SocketCommandContext>
     {
+        #region GetServerInfoAsync
+
         [Command("info")]
         [Alias("server", "server-info", "s-info")]
         [Summary("Show server information.")]
@@ -26,5 +28,7 @@ namespace GodBot.Executable.Module
 
             await ReplyAsync(embed: embed.Build());
         }
+
+        #endregion GetServerInfoAsync
     }
 }
