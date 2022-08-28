@@ -97,10 +97,14 @@ namespace GodBot.Executable.Modules
                 return;
             }
 
+            var searchType = Uri.TryCreate(searchQuery, UriKind.Absolute, out _)
+                ? SearchType.Direct
+                : SearchType.YouTubeMusic;
+
             var queries = searchQuery.Split(' ');
             foreach (var query in queries)
             {
-                var searchResponse = await _lavaNode.SearchAsync(SearchType.YouTubeMusic, query);
+                var searchResponse = await _lavaNode.SearchAsync(searchType, query);
                 if (searchResponse.Status == SearchStatus.LoadFailed ||
                     searchResponse.Status == SearchStatus.NoMatches)
                 {
